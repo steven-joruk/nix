@@ -24,10 +24,10 @@ task:
 
 task:
   matrix:
-    - name: OSX x86_64
+    - name: macOS x86_64
       env:
         TARGET: x86_64-apple-darwin
-    - name: OSX i686
+    - name: macOS i686
       env:
         TARGET: i686-apple-darwin
         DISABLE_TESTS: 1
@@ -50,6 +50,29 @@ task:
     - bash ci/script.sh
   before_cache_script: rm -rf $CARGO_HOME/registry/index
 
+
+# macOS aarch64 requires a more recent toolchain than the other macOS targets.
+# Until it has tier 1 support from the Rust compiler we can use the nightly
+# toolchain.
+task:
+  name: macOS aarch64
+  env:
+    TARGET: aarch64-apple-darwin
+    TOOLCHAIN: nightly
+    DISABLE_TESTS: 1
+  osx_instance:
+    image: big-sur-xcode
+  setup_script:
+    - curl --proto '=https' --tlsv1.2 -sSf -o rustup.sh https://sh.rustup.rs
+    - sh rustup.sh -y --profile=minimal --default-toolchain $TOOLCHAIN-$TARGET
+    - . $HOME/.cargo/env
+    - bash ci/install.sh
+  script:
+    - . $HOME/.cargo/env
+    - bash ci/install.sh
+  before_cache_script: rm -rf $CARGO_HOME/registry/index
+
+task:
 # Use cross for QEMU-based testing
 # cross needs to execute Docker, so we must use Cirrus's Docker Builder task.
 task:
